@@ -8,6 +8,8 @@ jobs:
     working_directory: /go/src/github.com/improbable-eng/thanos
     steps:
       - checkout
+      - setup_remote_docker:
+            version: 17.07.0-ce
       - run: make install-tools
       - run: dep ensure
       - run:
