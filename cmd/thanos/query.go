@@ -68,7 +68,7 @@ func registerQuery(m map[string]setupFunc, app *kingpin.Application, name string
 	selectorLabels := cmd.Flag("selector-label", "query selector labels that will be exposed in info endpoint (repeated)").
 		PlaceHolder("<name>=\"<value>\"").Strings()
 
-	stores := cmd.Flag("store", "addresses of statically configured store API servers (repeatable)").
+	stores := cmd.Flag("store", "addresses (host:port) of statically configured gRPC store API servers (repeatable)").
 		PlaceHolder("<store>").Strings()
 
 	m[name] = func(g *run.Group, logger log.Logger, reg *prometheus.Registry, tracer opentracing.Tracer) error {

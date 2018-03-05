@@ -1,20 +1,16 @@
 package cluster
 
 import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"math/rand"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	"encoding/json"
-
-	"math/rand"
 	"sync"
-
-	"context"
-
-	"io/ioutil"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -222,10 +218,15 @@ func (p *Peer) SetTimestamps(mint int64, maxt int64) {
 	p.data[p.Name()] = s
 }
 
-// Leave the cluster, waiting up to timeout.
-func (p *Peer) Leave(timeout time.Duration) error {
+// Close leaves the cluster waiting up to timeout and shutdowns peer if cluster left.
+// TODO(bplotka): Add this method into run.Group closing logic for each command. This will improve graceful shutdown.
+func (p *Peer) Close(timeout time.Duration) error {
+	err := p.mlist.Leave(timeout)
+	if err != nil {
+		return err
+	}
 	close(p.stopc)
-	return p.mlist.Leave(timeout)
+	return p.mlist.Shutdown()
 }
 
 // Name returns the unique ID of this peer in the cluster.
