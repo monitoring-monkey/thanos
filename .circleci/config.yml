@@ -1,0 +1,38 @@
+# NOTE: Current plan gives 1500 build minutes per month.
+version: 2
+jobs:
+  build:
+    docker:
+      # Available from https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/improbable-eng/thanos
+    steps:
+      - checkout
+      - run: make install-tools
+      - run: dep ensure
+      - run:
+          name: Create Secret if PR is not forked
+          # GCS integration tests are run only for author's PR that have write access, because these tests
+          # require credentials. Env variables that sets up these tests will work only for these kind of PRs.
+          command: |
+            if [ -n ${GCP_PROJECT} ]; then
+              echo $GOOGLE_APPLICATION_CREDENTIALS_CONTENT > /go/src/github.com/improbable-eng/thanos/circleci-gcs-creds.json
+              echo "Awesome! GCS integration tests are enabled."
+            fi
+      - run: make format
+      - run: make test
+      - run: make docker
+      - run:
+          name: Run tests on generated Docker image
+          command: |
+            docker run improbable/thanos --help
+            docker run improbable/thanos sidecar --help
+            docker run improbable/thanos store --help
+            docker run improbable/thanos query --help
+      - deploy:
+          name: Push Docker image
+          command: |
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              make docker-push
+            fi
