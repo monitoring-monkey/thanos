@@ -24,13 +24,7 @@ jobs:
       - run: make format
       - run: make test
       - run: make docker
-      - run:
-          name: Run tests on generated Docker image
-          command: |
-            docker run improbable/thanos --help
-            docker run improbable/thanos sidecar --help
-            docker run improbable/thanos store --help
-            docker run improbable/thanos query --help
+      - run: docker run improbable/thanos --help
       - deploy:
           name: Push Docker image
           command: |
